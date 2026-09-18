@@ -1,20 +1,21 @@
 pipeline {
     agent any
+    parameters {
+        choice(name: 'ENVIRONMENT', choices: ['staging', 'production'], description: 'target')
+    }
     stages {
-        stage('Test') {
-            steps {
-                sh 'echo Running tests'
+        stage('Build') { steps { sh 'echo Building' }}
+        stage('Tests') {
+            parallel {
+                stage('unit') { steps { sh 'echo unit tests' }}
+                stage('integration') { steps { sh 'echo integration tests' }}
             }
         }
         stage('Approve') {
-            steps {
-                input message: 'Tests passed. deploy to production?'
-            }
+            when { expression { params.ENVIRONMENT == 'production' }}
+            steps { input message: 'Deploy to production?' }
         }
-        stage('deploy') {
-            steps {
-                sh 'echo deploying to production'
-            }
-        }
+        stage('Deploy') { steps { sh "echo deploying to ${params.ENVIRONMENT}" }}
     }
 }    
+        
